@@ -490,7 +490,7 @@ img.snap{max-width:100%;border-radius:10px;margin-top:10px;border:1px solid var(
   </div>
   <div class="card"><div class="ct">Trail distance</div><div class="val" id="distance">0 m</div></div>
   <div class="card"><div class="ct">Device ID</div>
-    <input id="deviceIdLoc" value="child_device_1" style="width:100%;margin-bottom:8px">
+    <input id="deviceIdLoc" value="default" style="width:100%;margin-bottom:8px">
     <div class="ct">History filter</div>
     <div class="sm">From</div><input id="fromDate" type="date" style="width:100%">
     <div class="sm">To</div><input id="toDate" type="date" style="width:100%;margin-top:6px">
@@ -540,7 +540,7 @@ img.snap{max-width:100%;border-radius:10px;margin-top:10px;border:1px solid var(
   <div style="max-width:700px">
     <div class="card">
       <div class="ct">Device ID</div>
-      <input id="deviceIdCmd" value="child_device_1" style="width:100%;margin-bottom:14px">
+      <input id="deviceIdCmd" value="default" style="width:100%;margin-bottom:14px">
       <div class="ct">&#9889; Remote Commands</div>
       <div class="cg">
         <button class="cb" onclick="sendCmd('get_status')">&#128202; Get Status</button>
@@ -660,7 +660,7 @@ function mergePoint(p) {
 
 socket.on('locationUpdate', function(p){ if (p) mergePoint(p); });
 
-function getDeviceId() { return ($('deviceIdLoc') && $('deviceIdLoc').value.trim()) || 'child_device_1'; }
+function getDeviceId() { return ($('deviceIdLoc') && $('deviceIdLoc').value.trim()) || 'default'; }
 
 function loadHistory() {
   histMode = true; matchedLine.setLatLngs([]);
@@ -764,27 +764,27 @@ function renderContacts(contacts) {
 // COMMANDS
 var cmdLog = [];
 function sendCmd(action) {
-  var deviceId = $('deviceIdCmd').value.trim() || 'child_device_1';
+  var deviceId = $('deviceIdCmd').value.trim() || 'default';
   $('cmdResult').textContent = 'Sending ' + action + ' to ' + deviceId + '...';
   $('cmdImage').style.display = 'none';
   fetch('/command', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({action: action, deviceId: deviceId})
   }).then(function(r){ return r.json(); }).then(function(data){
-    $('cmdResult').textContent = 'Sent. ID: '+(data.command&&data.command.id)+'\nWaiting for device...';
+    $('cmdResult').textContent = 'Sent. ID: '+(data.command&&data.command.id)+'\\nWaiting for device...';
     cmdLog.unshift({time:new Date().toLocaleTimeString(), action:action, result:'Queued'});
     renderCmdHist();
   }).catch(function(e){ $('cmdResult').textContent = 'Failed: '+e.message; });
 }
 socket.on('commandResult', function(result){
-  var text = 'Command: '+result.commandId+'\nResult: '+result.result;
-  if (result.data) text += '\nData: '+JSON.stringify(result.data, null, 2);
+  var text = 'Command: '+result.commandId+'\\nResult: '+result.result;
+  if (result.data) text += '\\nData: '+JSON.stringify(result.data, null, 2);
   $('cmdResult').textContent = text;
   if (result.data && result.data.imageBase64) {
     $('cmdImage').src = 'data:image/jpeg;base64,'+result.data.imageBase64;
     $('cmdImage').style.display = 'block';
   }
-  cmdLog.unshift({time:new Date().toLocaleTimeString(), action:action, result:result.result});
+  cmdLog.unshift({time:new Date().toLocaleTimeString(), action:'result', result:result.result});
   renderCmdHist();
 });
 function renderCmdHist() {
@@ -795,7 +795,7 @@ function renderCmdHist() {
 
 // INITIAL LOAD
 (function() {
-  fetch('/history?limit=2000&deviceId=child_device_1').then(function(r){ return r.json(); }).then(function(data){
+  fetch('/history?limit=2000&deviceId=default').then(function(r){ return r.json(); }).then(function(data){
     if (Array.isArray(data)) {
       allPoints = data.filter(validPt).map(function(p){ return Object.assign({},p,{latitude:Number(p.latitude),longitude:Number(p.longitude)}); });
       drawTrail(allPoints);
